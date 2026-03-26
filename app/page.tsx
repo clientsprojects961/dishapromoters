@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -159,6 +159,9 @@ export default function Home() {
   const [wishlist, setWishlist] = useState<number[]>([])
   const [selectedPropertyType, setSelectedPropertyType] = useState('all')
 
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null)
+  const mobileToggleRef = useRef<HTMLButtonElement | null>(null)
+
   useEffect(() => {
     // Simulate loading
     const timer = setTimeout(() => setIsLoading(false), 2000)
@@ -174,13 +177,19 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    // Close mobile menu when navigating
-    const handleLinkClick = () => {
+    // Close mobile menu only when user clicks outside (prevents immediate close on hamburger click)
+    if (!mobileMenuOpen) return
+
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (mobileMenuRef.current?.contains(target)) return
+      if (mobileToggleRef.current?.contains(target)) return
       setMobileMenuOpen(false)
     }
-    document.addEventListener('click', handleLinkClick)
-    return () => document.removeEventListener('click', handleLinkClick)
-  }, [])
+
+    document.addEventListener('mousedown', handleDocumentMouseDown)
+    return () => document.removeEventListener('mousedown', handleDocumentMouseDown)
+  }, [mobileMenuOpen])
 
   // Hero carousel auto-rotation
   useEffect(() => {
@@ -245,7 +254,12 @@ export default function Home() {
             </Button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-primary/15 rounded-lg transition-all duration-300 text-foreground hover:text-primary"
+              ref={mobileToggleRef}
+              type="button"
+              aria-label="Open mobile menu"
+              className={`md:hidden p-2 hover:bg-primary/15 rounded-lg transition-all duration-300 ${
+                scrolled ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
+              }`}
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -254,12 +268,35 @@ export default function Home() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-border">
+          <div ref={mobileMenuRef} className="md:hidden bg-white border-t border-border">
             <nav className="flex flex-col p-4 gap-4">
-              <Link href="#properties" className="text-foreground hover:text-primary transition-colors">Properties</Link>
-              <Link href="#about" className="text-foreground hover:text-primary transition-colors">About</Link>
-              <Link href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</Link>
-              <Button className="w-full bg-primary hover:bg-primary/90">Schedule Tour</Button>
+              <Link
+                href="#properties"
+                className="text-foreground hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Properties
+              </Link>
+              <Link
+                href="#about"
+                className="text-foreground hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                About
+              </Link>
+              <Link
+                href="#contact"
+                className="text-foreground hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              <Button
+                className="w-full bg-primary hover:bg-primary/90"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Schedule Tour
+              </Button>
             </nav>
           </div>
         )}
@@ -641,7 +678,7 @@ export default function Home() {
         title="Chat with us on WhatsApp"
       >
         <Image
-          src="/whatsapplogo.png"
+          src="/wplogo.png"
           alt="WhatsApp"
           width={28}
           height={28}
@@ -666,7 +703,7 @@ export default function Home() {
             className="bg-[#25D366] hover:bg-[#1ebd58] text-white rounded-lg py-3 font-semibold transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
           >
             <Image
-              src="/whatsapplogo.png"
+              src="/wplogo.png"
               alt="WhatsApp"
               width={20}
               height={20}
